@@ -40,6 +40,22 @@ function launcher() {
 
     # Start sway
     dbus-run-session -- sway --unsupported-gpu
+  elif [ -n "$RUN_NIRI" ]; then
+    gow_log "[Niri] - Starting: \`$@\`"
+    export NIRI_SOCKET=${XDG_RUNTIME_DIR}/niri.socket
+    export XDG_CURRENT_DESKTOP=niri
+    export XDG_SESSION_DESKTOP=niri
+    export XDG_SESSION_TYPE=wayland
+    # Only copy waybar default config if it doesn't exist
+    mkdir -p $HOME/.config/waybar
+    cp -u /cfg/waybar/* $HOME/.config/waybar/
+    mkdir -p $HOME/.config/niri/
+    cp /cfg/niri/config.kdl $HOME/.config/niri/config.kdl
+    # Modify the config file to launch the app at the end
+    printf -v args_str '"%s" ' "$@"
+    printf '\n\nspawn-at-startup %s\n' "${args_str% }" >> "$HOME/.config/niri/config.kdl"
+    # Start Niri
+    dbus-run-session -- niri
   else
     gow_log "[exec] Starting: $@"
 

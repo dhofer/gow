@@ -131,6 +131,17 @@ elif [ -n "$RUN_SWAY" ]; then
   # Start Steam
   source /opt/gow/launch-comp.sh
   launcher /usr/games/steam ${STEAM_STARTUP_FLAGS}
+elif [ -n "$RUN_NIRI" ]; then
+    # Start IBus to enable showing the steam on-screen keyboard
+    /usr/bin/ibus-daemon -d -r --panel=disable --emoji-extension=disable
+
+    # Enable MangoHud for all vulkan (including Proton) games
+    # unless the user has explicitly disabled it in config.
+    export MANGOHUD=${MANGOHUD:-1}
+
+    # Start Steam
+    source /opt/gow/launch-comp.sh
+    launcher /usr/games/steam ${STEAM_STARTUP_FLAGS}
 else
   # shellcheck disable=SC2086
   exec /usr/games/steam ${STEAM_STARTUP_FLAGS}

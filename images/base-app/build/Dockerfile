@@ -9,7 +9,7 @@ WORKDIR /
 ARG SDL_JS_TEST_VERSION=8a84a47209f96eb3994cf9f906ae072e828886bb
 ENV SDL_JS_TEST_VERSION=${SDL_JS_TEST_VERSION}
 RUN <<_BUILD_SDL_JSTEST
-    set -e 
+    set -e
 
     apt-get update -y
     apt install -y --no-install-recommends \
@@ -17,7 +17,7 @@ RUN <<_BUILD_SDL_JSTEST
       cmake \
       libsdl2-dev \
       libncurses5-dev \
-      git 
+      git
 
     git clone https://github.com/games-on-whales/sdl-jstest
     cd sdl-jstest
@@ -30,6 +30,60 @@ RUN <<_BUILD_SDL_JSTEST
     make
 
 _BUILD_SDL_JSTEST
+
+#################################
+FROM ${BASE_IMAGE} as niri-builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /
+
+ARG NIRI_VERSION=3c75bfeaac4b010fc76d5d93d6f7468dfa62aca0
+ENV NIRI_VERSION=${NIRI_VERSION}
+
+ARG XWAYLAND_SATELLITE_VERSION=557ebeb616e03d5e4a8049862bbbd1f02c6f020b
+ENV XWAYLAND_SATELLITE_VERSION=${XWAYLAND_SATELLITE_VERSION}
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="$HOME/.cargo/bin:${PATH}"
+
+ARG RUST_VERSION=1.85.1
+ENV RUST_VERSION=$RUST_VERSION
+RUN rustup install $RUST_VERSION && rustup default $RUST_VERSION
+
+WORKDIR /
+RUN <<_BUILD_NIRI
+    #!/bin/bash
+    set -e
+
+    apt-get update -y
+    apt install -y --no-install-recommends \
+      build-essential \
+      clang \
+      pkg-config \
+      libdbus-1-dev \
+      libdisplay-info-dev \
+      libegl1-mesa-dev \
+      libgbm-dev \
+      libinput-dev \
+      libpango1.0-dev \
+      libseat-dev \
+      libudev-dev \
+      libwayland-dev \
+      libxcb-cursor-dev \
+      libxkbcommon-dev \
+      git
+
+    git clone https://github.com/Supreeeme/xwayland-satellite.git
+    cd xwayland-satellite
+    git checkout ${XWAYLAND_SATELLITE_VERSION}
+    cargo build --release
+    cd ..
+    git clone https://github.com/dhofer/niri.git
+    cd niri
+    git checkout ${NIRI_VERSION}
+    cargo build --release --no-default-features --features dbus
+_BUILD_NIRI
 
 #################################
 FROM ${BASE_IMAGE}
@@ -78,6 +132,12 @@ RUN apt-get update -y && \
     apt-get install -y --no-install-recommends libsdl2-2.0-0 libncurses6 && \
     rm -rf /var/lib/apt/lists/*
 COPY --from=sdl-jstest-builder /sdl-jstest/build/sdl2-jstest /usr/local/bin/sdl2-jstest
+
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends fuzzel libxcb-cursor0 && \
+    rm -rf /var/lib/apt/lists/*
+COPY --from=niri-builder /xwayland-satellite/target/release/xwayland-satellite /usr/local/bin/xwayland-satellite
+COPY --from=niri-builder /niri/target/release/niri /usr/local/bin/niri
 
 # Add /usr/games/ to $PATH in order to be able to run gamescope
 ENV PATH="/usr/games/:${PATH}"
