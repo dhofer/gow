@@ -536,3 +536,17 @@ binds {
     // moving the mouse or pressing any other key.
     Mod+Shift+P { power-off-monitors; }
 }
+
+// Don't show overlay on startup
+hotkey-overlay {
+    skip-at-startup
+    hide-not-bound
+}
+
+// Steam ...
+window-rule {
+    match app-id=r#"^steam"#
+    open-floating true
+    open-fullscreen true
+    open-focused true
+}
