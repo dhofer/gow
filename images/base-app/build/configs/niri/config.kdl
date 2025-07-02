@@ -546,7 +546,5 @@ hotkey-overlay {
 // Steam ...
 window-rule {
     match app-id=r#"^steam"#
-    open-floating true
-    open-fullscreen true
     open-focused true
 }
