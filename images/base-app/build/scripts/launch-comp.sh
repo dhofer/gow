@@ -43,6 +43,7 @@ function launcher() {
   elif [ -n "$RUN_NIRI" ]; then
     gow_log "[Niri] - Starting: \`$@\`"
     export NIRI_SOCKET=${XDG_RUNTIME_DIR}/niri.socket
+    export NIRI_STOP_ON_APP_EXIT=${NIRI_STOP_ON_APP_EXIT:-"yes"}
     export XDG_CURRENT_DESKTOP=niri
     export XDG_SESSION_DESKTOP=niri
     export XDG_SESSION_TYPE=wayland
@@ -51,9 +52,17 @@ function launcher() {
     cp -u /cfg/waybar/* $HOME/.config/waybar/
     mkdir -p $HOME/.config/niri/
     cp /cfg/niri/config.kdl $HOME/.config/niri/config.kdl
+    # replace GAMESCOPE_* vars
+    sed -i -e "s/\$GAMESCOPE_WIDTH/${GAMESCOPE_WIDTH}/g" \
+           -e "s/\$GAMESCOPE_HEIGHT/${GAMESCOPE_HEIGHT}/g" \
+           -e "s/\$GAMESCOPE_REFRESH/${GAMESCOPE_REFRESH}/g" $HOME/.config/niri/config.kdl
     # Modify the config file to launch the app at the end
-    printf -v args_str '"%s" ' "$@"
-    printf '\n\nspawn-at-startup %s\n' "${args_str% }" >> "$HOME/.config/niri/config.kdl"
+    CMD="$*"
+    # if NIRI_STOP_ON_APP_EXIT == "yes" then kill niri when the app exits
+    if [ "$NIRI_STOP_ON_APP_EXIT" == "yes" ]; then
+        CMD="$CMD && killall niri"
+    fi
+    echo "spawn-at-startup \"sh\" \"-c\" \"$CMD\"" >> "$HOME/.config/niri/config.kdl"
     # Start Niri
     dbus-run-session -- niri
   else

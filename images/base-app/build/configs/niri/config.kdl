@@ -204,14 +204,11 @@ layout {
 // which may be more convenient to use.
 // See the binds section below for more spawn examples.
 
-// Xwayland
-// spawn-at-startup "xwayland-satellite"
-// environment {
-//    DISPLAY ":0"
-// }
-
 // This line starts waybar, a commonly used bar for Wayland compositors.
 spawn-at-startup "waybar" "-c" "/home/retro/.config/waybar/niri.jsonc"
+
+// Mako notifications
+spawn-at-startup "mako"
 
 // Uncomment this line to ask the clients to omit their client-side decorations if possible.
 // If the client will specifically ask for CSD, the request will be honored.
@@ -545,6 +542,18 @@ hotkey-overlay {
 
 // Steam ...
 window-rule {
-    match app-id=r#"^steam"#
+    match app-id="steam" title=r#"^notificationtoasts_\d+_desktop$"#
+    default-floating-position x=10 y=10 relative-to="bottom-right"
+}
+
+window-rule {
+    match app-id=r#"^steam_app_\d+$"#
+    open-floating false
     open-focused true
+    open-fullscreen true
+    default-column-width { }
+    min-width $GAMESCOPE_WIDTH
+    max-width $GAMESCOPE_WIDTH
+    min-height $GAMESCOPE_HEIGHT
+    max-height $GAMESCOPE_HEIGHT
 }

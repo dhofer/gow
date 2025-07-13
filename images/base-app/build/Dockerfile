@@ -32,7 +32,7 @@ RUN <<_BUILD_SDL_JSTEST
 _BUILD_SDL_JSTEST
 
 #################################
-FROM ${BASE_IMAGE} as niri-builder
+FROM ${BASE_IMAGE} AS niri-builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -133,8 +133,11 @@ RUN apt-get update -y && \
     rm -rf /var/lib/apt/lists/*
 COPY --from=sdl-jstest-builder /sdl-jstest/build/sdl2-jstest /usr/local/bin/sdl2-jstest
 
+#################################
+# Install Niri
+#################################
 RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends fuzzel libxcb-cursor0 && \
+    apt-get install -y --no-install-recommends fuzzel libxcb-cursor0 mako-notifier && \
     rm -rf /var/lib/apt/lists/*
 COPY --from=niri-builder /xwayland-satellite/target/release/xwayland-satellite /usr/local/bin/xwayland-satellite
 COPY --from=niri-builder /niri/target/release/niri /usr/local/bin/niri
